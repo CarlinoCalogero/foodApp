@@ -1,28 +1,14 @@
 [
     {
-        "foodId": 2,
-        "foodName": "Riso",
-        "foodsAllowedCombinations": [
-            2,
-            3,
-            4
-        ],
-        "foodsNotAllowedCombinations": [
-            5,
-            7,
-            9
-        ]
+        "foodId": 1,
+        "foodName": "Riso"
     },
     {
-        "foodId": 4,
-        "foodName": "Miele",
-        "foodsAllowedCombinations": [
-            2,
-            7
-        ],
-        "foodsNotAllowedCombinations": [
-            5,
-            1
-        ]
+        "foodId": 2,
+        "foodName": "Miele"
+    },
+    {
+        "foodId": 3,
+        "foodName": "Piselli"
     }
 ]

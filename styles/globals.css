@@ -17,8 +17,8 @@ body {
 }
 
 /* Responsive layout */
-@media (max-width: 800px) {}
-
+@media (max-width: 800px) {
+}
 
 @media (prefers-color-scheme: dark) {
   html {
@@ -29,5 +29,4 @@ body {
     color: #e3e3e3;
     background: #131217;
   }
-
 }

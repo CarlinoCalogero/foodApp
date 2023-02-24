@@ -1,6 +1,10 @@
 export type Food = {
     foodId: number,
     foodName: string,
-    foodsAllowedCombinations: number[],
-    foodsNotAllowedCombinations: number[]
+}
+
+export type FoodCombination = {
+    food: Food,
+    foodsAllowedCombinations: Food[],
+    foodsNotAllowedCombinations: Food[]
 }
