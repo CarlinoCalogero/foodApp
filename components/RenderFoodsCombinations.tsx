@@ -22,8 +22,7 @@ function sortDisplayFoodCombinationByAscendingFoodId(
 export function RenderFoodsCombinations({
   foodCombinations,
 }: RenderFoodsCombinationsProps) {
-  console.log(foodCombinations);
-
+  //get all food data
   const foods = getAllFood();
 
   return (
@@ -56,11 +55,6 @@ export function RenderFoodsCombinations({
           });
           //sort the array to reduce future operations' computation time
           sortDisplayFoodCombinationByAscendingFoodId(displayFoodCombination);
-          console.log(
-            "sorted",
-            combination.food.foodName,
-            displayFoodCombination
-          );
 
           return (
             <tr key={combination.food.foodId}>
@@ -74,7 +68,7 @@ export function RenderFoodsCombinations({
                   //if true the food combination exists
 
                   return (
-                    <td>
+                    <td key={food.foodName + food.foodId}>
                       {displayFoodCombination[index][1] ===
                         CombinationStatus.ALLOWED && "Y"}
                       {displayFoodCombination[index][1] ===
@@ -83,7 +77,7 @@ export function RenderFoodsCombinations({
                   );
                 }
                 //if false the food combination does not exist
-                return <td></td>;
+                return <td key={food.foodName + food.foodId}></td>;
               })}
             </tr>
           );
