@@ -40,6 +40,86 @@ function sortFoodByAscendingFoodId(foods: Food[]) {
   });
 }
 
+function handleCombinationsUpdate(
+  newCombinations: FoodCombination[],
+  combinations: FoodCombination[],
+  isGlycemiaNormal: boolean
+) {
+  //merge the old and the new food combinations
+  let mergedCombinations = newCombinations.concat(combinations);
+  //sort our array in order to decrease future operations' computation time
+  sortFoodCombinationsByAscendingFoodId(mergedCombinations);
+  //let's clear our combination array
+  newCombinations = [];
+  //do our combination logic
+  mergedCombinations.forEach((foodCombination) => {
+    //find the index of this food combination
+    const index = newCombinations.findIndex(
+      (combination) => combination.food === foodCombination.food
+    );
+    if (index > -1) {
+      //if true there is already a combination so we just merge the two entries
+
+      //create an array for merging the old and new foodsAllowedCombinations/foodsNotAllowedCombinations array of this food
+      let mergedAllowedOrNotAllowedFoodCombinations: Food[] = [];
+      //create an array to store the reference of the foodsAllowedCombinations/foodsNotAllowedCombinations array
+      let foodsAllowedNotAllowedCombination: Food[] = [];
+      //check if glycemia's normal (we are talking about an allowed combination) or not (we are talking about a not allowed combination)
+      if (isGlycemiaNormal) {
+        //if true merge the old and new foodsAllowedCombinations array of this food
+        mergedAllowedOrNotAllowedFoodCombinations = newCombinations[
+          index
+        ].foodsAllowedCombinations.concat(
+          foodCombination.foodsAllowedCombinations
+        );
+        //clear foodsAllowedCombinations array
+        newCombinations[index].foodsAllowedCombinations = [];
+        //set the reference array to the foodsAllowedCombinations array
+        foodsAllowedNotAllowedCombination =
+          newCombinations[index].foodsAllowedCombinations;
+        //save foodsNotAllowedCombinations if present any
+        newCombinations[index].foodsNotAllowedCombinations =
+          foodCombination.foodsNotAllowedCombinations;
+      } else {
+        //if false merge the old and new foodsNotAllowedCombinations array of this food
+        mergedAllowedOrNotAllowedFoodCombinations = newCombinations[
+          index
+        ].foodsNotAllowedCombinations.concat(
+          foodCombination.foodsNotAllowedCombinations
+        );
+        //clear foodsNotAllowedCombinations array
+        newCombinations[index].foodsNotAllowedCombinations = [];
+        //set the reference array to the foodsNotAllowedCombinations array
+        foodsAllowedNotAllowedCombination =
+          newCombinations[index].foodsNotAllowedCombinations;
+        //save foodsAllowedCombinations if present any
+        newCombinations[index].foodsAllowedCombinations =
+          foodCombination.foodsAllowedCombinations;
+      }
+      //sort merged foodsAllowedCombinations/foodsNotAllowedCombinations arrays
+      sortFoodByAscendingFoodId(mergedAllowedOrNotAllowedFoodCombinations);
+      //re-populate foodsAllowedCombinations/foodsNotAllowedCombinations array
+      mergedAllowedOrNotAllowedFoodCombinations.forEach(
+        (allowedNotAllowedFood) => {
+          if (
+            !foodsAllowedNotAllowedCombination.find(
+              (food) => food === allowedNotAllowedFood
+            )
+          ) {
+            //if true we add the allowed/not allowed food to the array because it's not present
+            foodsAllowedNotAllowedCombination.push(allowedNotAllowedFood);
+          }
+        }
+      );
+    } else {
+      //if false we just add the new combination
+
+      newCombinations.push(foodCombination);
+    }
+  });
+  return newCombinations;
+}
+
 export default function Home() {
   const [selectedOption, setSelectedOption] = useState<any>([]);
 
@@ -83,55 +163,13 @@ export default function Home() {
 
       //update food combinations
       if (combinations.length != 0) {
-        //if true we need to understand if some food combination are already present in our array
+        //if true we need to understand if some food combinations are already in our array
 
-        //merge the old and the new food combinations
-        let mergedCombinations = newCombinations.concat(combinations);
-        //sort our array in order to decrease future operations' computation time
-        sortFoodCombinationsByAscendingFoodId(mergedCombinations);
-        //let's clear our combination array
-        newCombinations = [];
-        //do our combination logic
-        mergedCombinations.forEach((foodCombination) => {
-          //find the index of this food combination
-          const index = newCombinations.findIndex(
-            (combination) => combination.food === foodCombination.food
-          );
-          if (index > -1) {
-            //if true there is already a combination so we just merge the two entries
-
-            //merge the old and new foodsAllowedCombinations arrays of this food
-            let mergedAllowedFoodCombinations = newCombinations[
-              index
-            ].foodsAllowedCombinations.concat(
-              foodCombination.foodsAllowedCombinations
-            );
-            //sort merged foodsAllowedCombinations arrays
-            sortFoodByAscendingFoodId(mergedAllowedFoodCombinations);
-            //clear allowedFoodCombination array
-            newCombinations[index].foodsAllowedCombinations = [];
-            //re-populate allowedFoodCombination array
-            mergedAllowedFoodCombinations.forEach((allowedFood) => {
-              if (
-                !newCombinations[index].foodsAllowedCombinations.find(
-                  (food) => food === allowedFood
-                )
-              ) {
-                //if true we add the allowed food to the array because it's not present
-                newCombinations[index].foodsAllowedCombinations.push(
-                  allowedFood
-                );
-              }
-            });
-            //save foodsNotAllowedCombinations if present any
-            newCombinations[index].foodsNotAllowedCombinations =
-              foodCombination.foodsNotAllowedCombinations;
-          } else {
-            //if false we just add the new combination
-
-            newCombinations.push(foodCombination);
-          }
-        });
+        newCombinations = handleCombinationsUpdate(
+          newCombinations,
+          combinations,
+          true
+        );
       }
       //if false there are no combinations yet so we can populate it from scratch
     } else {
@@ -152,9 +190,22 @@ export default function Home() {
             ),
           })
         );
+
+        //update food combinations
+        if (combinations.length != 0) {
+          //if true we need to understand if some food combinations are already in our array
+
+          newCombinations = handleCombinationsUpdate(
+            newCombinations,
+            combinations,
+            false
+          );
+        }
+        //if false there are no combinations yet so we can populate it from scratch
       }
     }
     //update the state
+
     setCombinations(newCombinations);
     //******FOOD COMBINATION LOGIC - END*******
   }
