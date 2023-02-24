@@ -419,7 +419,7 @@ export default function Home() {
 
         <button type="submit">Submit</button>
 
-        <RenderFoodsCombinations />
+        <RenderFoodsCombinations foodCombinations={combinations} />
       </form>
     </div>
   );

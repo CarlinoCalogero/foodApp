@@ -12,6 +12,24 @@ body {
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 }
 
+table,
+th,
+td {
+  border: 0.1rem solid;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th,
+td {
+  padding: 1rem;
+}
+
+td {
+  width: 25%;
+  text-align: center;
+}
+
 * {
   box-sizing: border-box;
 }
