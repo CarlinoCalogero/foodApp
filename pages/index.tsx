@@ -57,18 +57,20 @@ export default function Home() {
     };
 
     //******FOOD COMBINATION LOGIC - START*******
+    //fetch food data
+    let foodsId: number[] = [];
+    selectedOption.map((option: { value: string; label: string }) => {
+      foodsId.push(Number(option.value));
+    });
+    const selectedFoods = getFoodsFromId(foodsId);
+
+    //create a new array to update the combinations
+    let newCombinations: FoodCombination[] = [];
+
     if (data.glycemiaValue < 140) {
       //if true all foods combinations are allowed
 
-      //fetch food data
-      let foodsId: number[] = [];
-      selectedOption.map((option: { value: string; label: string }) => {
-        foodsId.push(Number(option.value));
-      });
-      const selectedFoods = getFoodsFromId(foodsId);
-
-      //first let's populate a new array
-      let newCombinations: FoodCombination[] = [];
+      //populate the new combinations array
       selectedFoods.forEach((food) =>
         newCombinations.push({
           food: food,
@@ -121,6 +123,9 @@ export default function Home() {
                 );
               }
             });
+            //save foodsNotAllowedCombinations if present any
+            newCombinations[index].foodsNotAllowedCombinations =
+              foodCombination.foodsNotAllowedCombinations;
           } else {
             //if false we just add the new combination
 
@@ -129,10 +134,28 @@ export default function Home() {
         });
       }
       //if false there are no combinations yet so we can populate it from scratch
+    } else {
+      //if false there is at least a combination that is not allowed
 
-      //update the state
-      setCombinations(newCombinations);
+      if (selectedFoods.length > 2) {
+        //if true we do not know which food combination is the one not allowed
+      } else {
+        //if false we only have 2 foods so the combination between this 2 foods is not allowed
+
+        //populate the new combinations array
+        selectedFoods.forEach((food) =>
+          newCombinations.push({
+            food: food,
+            foodsAllowedCombinations: [],
+            foodsNotAllowedCombinations: selectedFoods.filter(
+              (selectedFood) => selectedFood != food
+            ),
+          })
+        );
+      }
     }
+    //update the state
+    setCombinations(newCombinations);
     //******FOOD COMBINATION LOGIC - END*******
   }
 
