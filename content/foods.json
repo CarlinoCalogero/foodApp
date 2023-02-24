@@ -10,5 +10,13 @@
     {
         "foodId": 3,
         "foodName": "Piselli"
+    },
+    {
+        "foodId": 4,
+        "foodName": "Zucchine"
+    },
+    {
+        "foodId": 5,
+        "foodName": "Fagioli"
     }
 ]

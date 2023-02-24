@@ -16,9 +16,34 @@ function parseFoodForForm() {
   return foodOptions;
 }
 
+function sortFoodCombinationsByAscendingFoodId(
+  combinations: FoodCombination[]
+) {
+  combinations.sort((combination1, combination2) => {
+    if (combination1.food.foodId > combination2.food.foodId) {
+      return 1;
+    } else if (combination1.food.foodId < combination2.food.foodId) {
+      return -1;
+    }
+    return 0;
+  });
+}
+
+function sortFoodByAscendingFoodId(foods: Food[]) {
+  foods.sort((food1, food2) => {
+    if (food1.foodId > food2.foodId) {
+      return 1;
+    } else if (food1.foodId < food2.foodId) {
+      return -1;
+    }
+    return 0;
+  });
+}
+
 export default function Home() {
   const [selectedOption, setSelectedOption] = useState<any>([]);
 
+  //array which contains all foodCombinations
   const [combinations, setCombinations] = useState<FoodCombination[]>([]);
 
   // Handles the submit event on form submit.
@@ -31,8 +56,7 @@ export default function Home() {
       glycemiaValue: event.target.glycemiaValueTarget.value,
     };
 
-    //******START*******
-    //food combination logic
+    //******FOOD COMBINATION LOGIC - START*******
     if (data.glycemiaValue < 140) {
       //if true all foods combinations are allowed
 
@@ -43,28 +67,73 @@ export default function Home() {
       });
       const selectedFoods = getFoodsFromId(foodsId);
 
+      //first let's populate a new array
+      let newCombinations: FoodCombination[] = [];
+      selectedFoods.forEach((food) =>
+        newCombinations.push({
+          food: food,
+          foodsAllowedCombinations: selectedFoods.filter(
+            (selectedFood) => selectedFood != food
+          ),
+          foodsNotAllowedCombinations: [],
+        })
+      );
+
       //update food combinations
-      if (combinations.length === 0) {
-        //if true there are no combinations yet so we can populate it from scratch
+      if (combinations.length != 0) {
+        //if true we need to understand if some food combination are already present in our array
 
-        //first let's populate a new array
-        let newCombinations: FoodCombination[] = [];
-        selectedFoods.forEach((food) =>
-          newCombinations.push({
-            food: food,
-            foodsAllowedCombinations: selectedFoods.filter(
-              (selectedFood) => selectedFood != food
-            ),
-            foodsNotAllowedCombinations: [],
-          })
-        );
+        //merge the old and the new food combinations
+        let mergedCombinations = newCombinations.concat(combinations);
+        //sort our array in order to decrease future operations' computation time
+        sortFoodCombinationsByAscendingFoodId(mergedCombinations);
+        //let's clear our combination array
+        newCombinations = [];
+        //do our combination logic
+        mergedCombinations.forEach((foodCombination) => {
+          //find the index of this food combination
+          const index = newCombinations.findIndex(
+            (combination) => combination.food === foodCombination.food
+          );
+          if (index > -1) {
+            //if true there is already a combination so we just merge the two entries
 
-        //let's now update the state
-        return setCombinations(newCombinations);
-      } else {
-        //if false there are already combinations so we need to understed if some combination are already present
+            //merge the old and new foodsAllowedCombinations arrays of this food
+            let mergedAllowedFoodCombinations = newCombinations[
+              index
+            ].foodsAllowedCombinations.concat(
+              foodCombination.foodsAllowedCombinations
+            );
+            //sort merged foodsAllowedCombinations arrays
+            sortFoodByAscendingFoodId(mergedAllowedFoodCombinations);
+            //clear allowedFoodCombination array
+            newCombinations[index].foodsAllowedCombinations = [];
+            //re-populate allowedFoodCombination array
+            mergedAllowedFoodCombinations.forEach((allowedFood) => {
+              if (
+                !newCombinations[index].foodsAllowedCombinations.find(
+                  (food) => food === allowedFood
+                )
+              ) {
+                //if true we add the allowed food to the array because it's not present
+                newCombinations[index].foodsAllowedCombinations.push(
+                  allowedFood
+                );
+              }
+            });
+          } else {
+            //if false we just add the new combination
+
+            newCombinations.push(foodCombination);
+          }
+        });
       }
+      //if false there are no combinations yet so we can populate it from scratch
+
+      //update the state
+      setCombinations(newCombinations);
     }
+    //******FOOD COMBINATION LOGIC - END*******
   }
 
   useEffect(() => {
