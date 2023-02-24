@@ -255,30 +255,97 @@ export default function Home() {
             //if true we now have all the combinations status written between the selected foods stored in an array
 
             //create a new array in order to skim the foodCombinationsStatus array
-            let skimmedFoodCombinationsStatusArray: FoodCombinationStatus[] =
-              [];
+            let skimmedFoodCombinationsStatus: FoodCombinationStatus[] = [];
             foodCombinationsStatus.forEach((combinationStatus) => {
-              console.log(
-                combinationStatus,
-                skimmedFoodCombinationsStatusArray
-              );
+              console.log(combinationStatus, skimmedFoodCombinationsStatus);
               if (
-                !skimmedFoodCombinationsStatusArray.find(
+                !skimmedFoodCombinationsStatus.find(
                   (combination) =>
                     combination.food1 === combinationStatus.food1 &&
                     combination.food2 === combinationStatus.food2
                 ) &&
-                !skimmedFoodCombinationsStatusArray.find(
+                !skimmedFoodCombinationsStatus.find(
                   (combination) =>
                     combination.food1 === combinationStatus.food2 &&
                     combination.food2 === combinationStatus.food1
                 )
               ) {
-                //if true we add the cobination status
-                skimmedFoodCombinationsStatusArray.push(combinationStatus);
+                //if true we add the combination status to the skimmedFoodCombinationsStatus array
+
+                skimmedFoodCombinationsStatus.push(combinationStatus);
               }
             });
-            console.log("skimmed", skimmedFoodCombinationsStatusArray);
+            console.log("skimmed", skimmedFoodCombinationsStatus);
+            //create an array to store not existing food combination
+            let notExistingFoodCombinations: [Food, Food][] = [];
+            //create an array to store not allowed food combination
+            let notAllowedFoodCombinations: [Food, Food][] = [];
+            //sort the skimmed food combination status
+            skimmedFoodCombinationsStatus.forEach((skimmedfoodCombination) => {
+              if (
+                skimmedfoodCombination.combinationIsAllowedNotAllowedOrDoesNotExist ===
+                CombinationStatus.DOESNOTEXIST
+              ) {
+                //if true we add it to the array to store not existing food combination
+
+                notExistingFoodCombinations.push([
+                  skimmedfoodCombination.food1,
+                  skimmedfoodCombination.food2,
+                ]);
+              }
+
+              if (
+                skimmedfoodCombination.combinationIsAllowedNotAllowedOrDoesNotExist ===
+                CombinationStatus.NOTALLOWED
+              ) {
+                //if true we add it to the array to store not allowed food combination
+
+                notAllowedFoodCombinations.push([
+                  skimmedfoodCombination.food1,
+                  skimmedfoodCombination.food2,
+                ]);
+              }
+            });
+            //try to figure out which combination is the one not allowed
+            //we can't have the case in which  notExistingFoodCombinations.length === 0 && notAllowedFoodCombinations.length === 0 because it would mean that the glycemia value is normal
+            if (
+              notExistingFoodCombinations.length === 1 &&
+              notAllowedFoodCombinations.length === 0
+            ) {
+              //if true we have successfully figured out which food combination is the one not allowed
+
+              console.log(
+                "The not allowed food combination is",
+                notExistingFoodCombinations
+              );
+            }
+
+            if (
+              notExistingFoodCombinations.length === 0 &&
+              notAllowedFoodCombinations.length === 1
+            ) {
+              //if true we have successfully figured out which food combination is the one not allowed
+
+              console.log(
+                "The not allowed food combination is",
+                notAllowedFoodCombinations
+              );
+            }
+
+            if (notExistingFoodCombinations.length === 0) {
+              //if true we know that the high glicemia value is due to this or these not allowed food combinations
+
+              console.log(
+                "The not allowed food combination is",
+                notAllowedFoodCombinations
+              );
+            } else {
+              //if false we cannot try to figure out which combination is the one not allowed
+
+              console.log(
+                "We cannot undestrand which food combination is the one which is not allowed"
+              );
+            }
           } else {
             //if false we cannot try to figure out which combination is the one not allowed
 
