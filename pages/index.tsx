@@ -256,8 +256,8 @@ export default function Home() {
 
             //create a new array in order to skim the foodCombinationsStatus array
             let skimmedFoodCombinationsStatus: FoodCombinationStatus[] = [];
+            //skim the foodCombinationsStatus array
             foodCombinationsStatus.forEach((combinationStatus) => {
-              console.log(combinationStatus, skimmedFoodCombinationsStatus);
               if (
                 !skimmedFoodCombinationsStatus.find(
                   (combination) =>
@@ -275,7 +275,6 @@ export default function Home() {
                 skimmedFoodCombinationsStatus.push(combinationStatus);
               }
             });
-            console.log("skimmed", skimmedFoodCombinationsStatus);
             //create an array to store not existing food combination
             let notExistingFoodCombinations: [Food, Food][] = [];
             //create an array to store not allowed food combination
