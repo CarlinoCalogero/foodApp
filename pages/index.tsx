@@ -1,6 +1,11 @@
 import { getAllFood, getFoodsFromId } from "@/clientlib/utils";
 import { RenderFoodsCombinations } from "@/components/RenderFoodsCombinations";
-import { Food, FoodCombination } from "@/types/Food";
+import {
+  CombinationStatus,
+  Food,
+  FoodCombination,
+  FoodCombinationStatus,
+} from "@/types/Food";
 import { useEffect, useState } from "react";
 import ReactSelect from "react-select";
 import styles from "./index.module.css";
@@ -177,6 +182,116 @@ export default function Home() {
 
       if (selectedFoods.length > 2) {
         //if true we do not know which food combination is the one not allowed
+
+        //try to figure out which combinations are not allowed
+        if (combinations.length != 0) {
+          //if true we need to understand if some food combinations are already in our array
+
+          //create an array to store if a food combination exists, is allowed or is not allowed
+          let foodCombinationsStatus: FoodCombinationStatus[] = [];
+          //figure out which food combinations is allowed, not allowed or does not exist and store data in the array
+          selectedFoods.forEach((food) => {
+            const index = combinations.findIndex(
+              (combination) => combination.food === food
+            );
+
+            if (index > -1) {
+              //if true the food has combinations
+
+              selectedFoods.forEach((foodToFigureOutCombinationStatusWith) => {
+                if (foodToFigureOutCombinationStatusWith != food) {
+                  //if true we are not examining the same food
+
+                  if (
+                    combinations[index].foodsAllowedCombinations.find(
+                      (foodAllowed) =>
+                        foodAllowed === foodToFigureOutCombinationStatusWith
+                    )
+                  ) {
+                    //if true the food combination is allowed
+
+                    foodCombinationsStatus.push({
+                      food1: food,
+                      food2: foodToFigureOutCombinationStatusWith,
+                      combinationIsAllowedNotAllowedOrDoesNotExist:
+                        CombinationStatus.ALLOWED,
+                    });
+                  } else if (
+                    combinations[index].foodsNotAllowedCombinations.find(
+                      (foodNotAllowed) =>
+                        foodNotAllowed === foodToFigureOutCombinationStatusWith
+                    )
+                  ) {
+                    //if true the food combination is not allowed
+
+                    foodCombinationsStatus.push({
+                      food1: food,
+                      food2: foodToFigureOutCombinationStatusWith,
+                      combinationIsAllowedNotAllowedOrDoesNotExist:
+                        CombinationStatus.NOTALLOWED,
+                    });
+                  } else {
+                    //food combination does not exist
+
+                    foodCombinationsStatus.push({
+                      food1: food,
+                      food2: foodToFigureOutCombinationStatusWith,
+                      combinationIsAllowedNotAllowedOrDoesNotExist:
+                        CombinationStatus.DOESNOTEXIST,
+                    });
+                  }
+                }
+              });
+            } else {
+              //if false the food does not have combinations
+
+              console.log(
+                "We cannot undestrand which food combination is the one which is not allowed"
+              );
+            }
+          });
+          //understand if we can really try to figure out which combination is the one not allowed
+          if (foodCombinationsStatus.length > 0) {
+            //if true we now have all the combinations status written between the selected foods stored in an array
+
+            //create a new array in order to skim the foodCombinationsStatus array
+            let skimmedFoodCombinationsStatusArray: FoodCombinationStatus[] =
+              [];
+            foodCombinationsStatus.forEach((combinationStatus) => {
+              console.log(
+                combinationStatus,
+                skimmedFoodCombinationsStatusArray
+              );
+              if (
+                !skimmedFoodCombinationsStatusArray.find(
+                  (combination) =>
+                    combination.food1 === combinationStatus.food1 &&
+                    combination.food2 === combinationStatus.food2
+                ) &&
+                !skimmedFoodCombinationsStatusArray.find(
+                  (combination) =>
+                    combination.food1 === combinationStatus.food2 &&
+                    combination.food2 === combinationStatus.food1
+                )
+              ) {
+                //if true we add the cobination status
+                skimmedFoodCombinationsStatusArray.push(combinationStatus);
+              }
+            });
+            console.log("skimmed", skimmedFoodCombinationsStatusArray);
+          } else {
+            //if false we cannot try to figure out which combination is the one not allowed
+
+            console.log(
+              "We cannot undestrand which food combination is the one which is not allowed"
+            );
+          }
+        } else {
+          //if false we cannot try to figure out which food combination is the one not allowed
+          console.log(
+            "We cannot undestrand which food combination is the one which is not allowed"
+          );
+        }
       } else {
         //if false we only have 2 foods so the combination between this 2 foods is not allowed
 

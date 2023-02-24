@@ -8,3 +8,15 @@ export type FoodCombination = {
     foodsAllowedCombinations: Food[],
     foodsNotAllowedCombinations: Food[]
 }
+
+export type FoodCombinationStatus = {
+    food1: Food,
+    food2: Food,
+    combinationIsAllowedNotAllowedOrDoesNotExist: CombinationStatus
+}
+
+export enum CombinationStatus {
+    ALLOWED,
+    NOTALLOWED,
+    DOESNOTEXIST
+}
