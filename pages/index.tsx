@@ -1,4 +1,9 @@
-import { getAllFood, getFoodsFromId } from "@/clientlib/utils";
+import {
+  checkNotAllowedFoodCombination,
+  getAllFood,
+  getFoodsFromId,
+  handleCombinationsUpdate,
+} from "@/clientlib/utils";
 import { RenderFoodsCombinations } from "@/components/RenderFoodsCombinations";
 import {
   CombinationStatus,
@@ -19,110 +24,6 @@ function parseFoodForForm() {
     foodOptions.push({ value: `${food.foodId}`, label: `${food.foodName}` });
   });
   return foodOptions;
-}
-
-function sortFoodCombinationsByAscendingFoodId(
-  combinations: FoodCombination[]
-) {
-  combinations.sort((combination1, combination2) => {
-    if (combination1.food.foodId > combination2.food.foodId) {
-      return 1;
-    } else if (combination1.food.foodId < combination2.food.foodId) {
-      return -1;
-    }
-    return 0;
-  });
-}
-
-function sortFoodByAscendingFoodId(foods: Food[]) {
-  foods.sort((food1, food2) => {
-    if (food1.foodId > food2.foodId) {
-      return 1;
-    } else if (food1.foodId < food2.foodId) {
-      return -1;
-    }
-    return 0;
-  });
-}
-
-function handleCombinationsUpdate(
-  newCombinations: FoodCombination[],
-  combinations: FoodCombination[],
-  isGlycemiaNormal: boolean
-) {
-  //merge the old and the new food combinations
-  let mergedCombinations = newCombinations.concat(combinations);
-  //sort our array in order to decrease future operations' computation time
-  sortFoodCombinationsByAscendingFoodId(mergedCombinations);
-  //let's clear our combination array
-  newCombinations = [];
-  //do our combination logic
-  mergedCombinations.forEach((foodCombination) => {
-    //find the index of this food combination
-    const index = newCombinations.findIndex(
-      (combination) => combination.food === foodCombination.food
-    );
-    if (index > -1) {
-      //if true there is already a combination so we just merge the two entries
-
-      //create an array for merging the old and new foodsAllowedCombinations/foodsNotAllowedCombinations array of this food
-      let mergedAllowedOrNotAllowedFoodCombinations: Food[] = [];
-      //create an array to store the reference of the foodsAllowedCombinations/foodsNotAllowedCombinations array
-      let foodsAllowedNotAllowedCombination: Food[] = [];
-      //check if glycemia's normal (we are talking about an allowed combination) or not (we are talking about a not allowed combination)
-      if (isGlycemiaNormal) {
-        //if true merge the old and new foodsAllowedCombinations array of this food
-        mergedAllowedOrNotAllowedFoodCombinations = newCombinations[
-          index
-        ].foodsAllowedCombinations.concat(
-          foodCombination.foodsAllowedCombinations
-        );
-        //clear foodsAllowedCombinations array
-        newCombinations[index].foodsAllowedCombinations = [];
-        //set the reference array to the foodsAllowedCombinations array
-        foodsAllowedNotAllowedCombination =
-          newCombinations[index].foodsAllowedCombinations;
-        //save foodsNotAllowedCombinations if present any
-        newCombinations[index].foodsNotAllowedCombinations =
-          foodCombination.foodsNotAllowedCombinations;
-      } else {
-        //if false merge the old and new foodsNotAllowedCombinations array of this food
-        mergedAllowedOrNotAllowedFoodCombinations = newCombinations[
-          index
-        ].foodsNotAllowedCombinations.concat(
-          foodCombination.foodsNotAllowedCombinations
-        );
-        //clear foodsNotAllowedCombinations array
-        newCombinations[index].foodsNotAllowedCombinations = [];
-        //set the reference array to the foodsNotAllowedCombinations array
-        foodsAllowedNotAllowedCombination =
-          newCombinations[index].foodsNotAllowedCombinations;
-        //save foodsAllowedCombinations if present any
-        newCombinations[index].foodsAllowedCombinations =
-          foodCombination.foodsAllowedCombinations;
-      }
-      //sort merged foodsAllowedCombinations/foodsNotAllowedCombinations arrays
-      sortFoodByAscendingFoodId(mergedAllowedOrNotAllowedFoodCombinations);
-      //re-populate foodsAllowedCombinations/foodsNotAllowedCombinations array
-      mergedAllowedOrNotAllowedFoodCombinations.forEach(
-        (allowedNotAllowedFood) => {
-          if (
-            !foodsAllowedNotAllowedCombination.find(
-              (food) => food === allowedNotAllowedFood
-            )
-          ) {
-            //if true we add the allowed/not allowed food to the array because it's not present
-            foodsAllowedNotAllowedCombination.push(allowedNotAllowedFood);
-          }
-        }
-      );
-    } else {
-      //if false we just add the new combination
-
-      newCombinations.push(foodCombination);
-    }
-  });
-  return newCombinations;
 }
 
 export default function Home() {
@@ -170,11 +71,29 @@ export default function Home() {
       if (combinations.length != 0) {
         //if true we need to understand if some food combinations are already in our array
 
-        newCombinations = handleCombinationsUpdate(
-          newCombinations,
-          combinations,
-          true
+        //check if there are one or more a not allowed food combination between the selected foods
+        //If one or more not allowed food combination between the selected foods do exist, notify the user that, maybe, he has made a mistake
+        const notAllowedFoodCombinations = checkNotAllowedFoodCombination(
+          selectedFoods,
+          combinations
         );
+
+        if (notAllowedFoodCombinations.length === 0) {
+          //if true we can update the combinations
+
+          newCombinations = handleCombinationsUpdate(
+            newCombinations,
+            combinations,
+            true
+          );
+        } else {
+          //if false then maybe the user has made a mistake
+
+          return console.log(
+            "glicemia value cannot be normal because there are one or more not allowed food combinations!",
+            notAllowedFoodCombinations
+          );
+        }
       }
       //if false there are no combinations yet so we can populate it from scratch
     } else {
@@ -245,7 +164,7 @@ export default function Home() {
             } else {
               //if false the food does not have combinations
 
-              console.log(
+              return console.log(
                 "We cannot undestrand which food combination is the one which is not allowed"
               );
             }
@@ -313,7 +232,7 @@ export default function Home() {
             ) {
               //if true we have successfully figured out which food combination is the one not allowed
 
-              console.log(
+              return console.log(
                 "The not allowed food combination is",
                 notExistingFoodCombinations
               );
@@ -325,7 +244,7 @@ export default function Home() {
             ) {
               //if true we have successfully figured out which food combination is the one not allowed
 
-              console.log(
+              return console.log(
                 "The not allowed food combination is",
                 notAllowedFoodCombinations
               );
@@ -334,27 +253,27 @@ export default function Home() {
             if (notExistingFoodCombinations.length === 0) {
               //if true we know that the high glicemia value is due to this or these not allowed food combinations
 
-              console.log(
+              return console.log(
                 "The not allowed food combination is",
                 notAllowedFoodCombinations
               );
             } else {
               //if false we cannot try to figure out which combination is the one not allowed
 
-              console.log(
+              return console.log(
                 "We cannot undestrand which food combination is the one which is not allowed"
               );
             }
           } else {
             //if false we cannot try to figure out which combination is the one not allowed
 
-            console.log(
+            return console.log(
               "We cannot undestrand which food combination is the one which is not allowed"
             );
           }
         } else {
           //if false we cannot try to figure out which food combination is the one not allowed
-          console.log(
+          return console.log(
             "We cannot undestrand which food combination is the one which is not allowed"
           );
         }
