@@ -354,6 +354,7 @@ export function handleFoodLogic(selectedOption: any, combinations: FoodCombinati
                 //if true than this food combination is allowed and the input glicemia value is wrong
                 if (foodCombinationsStatus.notAllowedFoodCombinations.length != 0) {
                     console.log("Error! This combination is not allowed, please make sure that the inserted glicemia value is correct", foodCombinationsStatus.notAllowedFoodCombinations);
+                    return;
                 }
 
                 //if true than this food combination does not already exist and is the one which is not allowed
@@ -480,6 +481,7 @@ export function handleFoodLogic(selectedOption: any, combinations: FoodCombinati
                     //if true than this food combination is allowed and the input glicemia value is wrong
                     if (foodCombinationsStatus.allowedFoodCombinations.length != 0) {
                         console.log("Error! This combination is allowed, please make sure that the inserted glicemia value is correct", foodCombinationsStatus.allowedFoodCombinations);
+                        return;
                     }
 
                     //if true than this food combination does not already exist and is the one which is not allowed
@@ -504,7 +506,7 @@ export function handleFoodLogic(selectedOption: any, combinations: FoodCombinati
                 console.log("We do not even have one combination already registered");
 
                 //populate the new combinations array
-                newCombinations = populateNewCombinationArray(selectedFoods, true)
+                newCombinations = populateNewCombinationArray(selectedFoods, false)
 
             }
 
