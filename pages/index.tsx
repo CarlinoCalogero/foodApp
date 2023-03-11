@@ -1,4 +1,4 @@
-import { getAllFood, handleFoodLogin } from "@/clientlib/utils";
+import { getAllFood, handleFoodLogic } from "@/clientlib/utils";
 import { RenderFoodsCombinations } from "@/components/RenderFoodsCombinations";
 import { FoodCombination } from "@/types/Food";
 import { useEffect, useState } from "react";
@@ -33,7 +33,7 @@ export default function Home() {
     };
 
     //food combination logic
-    const newCombinations = handleFoodLogin(selectedOption, combinations, data);
+    const newCombinations = handleFoodLogic(selectedOption, combinations, data);
     if (newCombinations) {
       setCombinations(newCombinations);
     }

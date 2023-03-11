@@ -318,7 +318,7 @@ export function populateNewCombinationArray(selectedFoods: Food[], isAllowedComb
 
 }
 
-export function handleFoodLogin(selectedOption: any, combinations: FoodCombination[], data: any) {
+export function handleFoodLogic(selectedOption: any, combinations: FoodCombination[], data: any) {
 
     //fetch food data
     let foodsId: number[] = [];
