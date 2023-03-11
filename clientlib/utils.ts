@@ -1,4 +1,4 @@
-import { Food, FoodCombination } from "@/types/Food";
+import { CombinationStatus, Food, FoodCombination, FoodCombinationStatus, FoodCombinationStatusCompleteView, FoodPair } from "@/types/Food";
 import foods from "content/foods.json"
 
 export function getAllFood() {
@@ -119,63 +119,412 @@ export function handleCombinationsUpdate(
     return newCombinations;
 }
 
-//checks if there are not allowed food combination and stores them in an array which is later returned
-export function checkNotAllowedFoodCombination(selectedFoods: Food[], combinations: FoodCombination[]) {
+//checks if a food combination exists, is allowed or is not allowed
+export function checkFoodCombinationStatus(selectedFoods: Food[], combinations: FoodCombination[]) {
 
-    //create an array to store the not allowed food combinations
-    let notAllowedFoodCombinations: [Food, Food][] = [];
+    //if true we do not even have one combination already registered
+    if (combinations.length == 0) {
+        console.log("We do not even have one combination already registered");
+        return null;
+    }
 
+    //create an array to store if a food combination exists, is allowed or is not allowed
+    let foodCombinationsStatus: FoodCombinationStatus[] = [];
+    //figure out which food combinations is allowed, not allowed or does not exist and store data in the array
     selectedFoods.forEach((food) => {
+        const index = combinations.findIndex(
+            (combination) => combination.food === food
+        );
 
-        //check if food has combinations stored
-        const index = combinations.findIndex((combination) => combination.food === food)
         if (index > -1) {
-            //if true food has combinations stored
+            //if true the food has already some combinations already registered
 
-            selectedFoods.forEach((potentiallyNotAllowedFood) => {
+            selectedFoods.forEach((foodToFigureOutCombinationStatusWith) => {
+                if (foodToFigureOutCombinationStatusWith != food) {
+                    //if true we are not examining the same food
 
-                //check if food is the same as the one being considered
-                if (potentiallyNotAllowedFood != food) {
-                    //if true we are considering a different food
+                    console.log(foodToFigureOutCombinationStatusWith, food);
 
-                    const indexNotAllowedFood = combinations[index].foodsNotAllowedCombinations.indexOf(potentiallyNotAllowedFood);
-                    if (indexNotAllowedFood > -1) {
-                        //if true this food combination is not allowed
 
-                        //store the notAllowedFood combination
-                        notAllowedFoodCombinations.push([food, potentiallyNotAllowedFood])
+                    if (
+                        combinations[index].foodsAllowedCombinations.find(
+                            (foodAllowed) =>
+                                foodAllowed === foodToFigureOutCombinationStatusWith
+                        )
+                    ) {
+                        //if true the food combination is allowed
+
+                        foodCombinationsStatus.push({
+                            food1: food,
+                            food2: foodToFigureOutCombinationStatusWith,
+                            combinationIsAllowedNotAllowedOrDoesNotExist:
+                                CombinationStatus.ALLOWED,
+                        });
+                    } else if (
+                        combinations[index].foodsNotAllowedCombinations.find(
+                            (foodNotAllowed) =>
+                                foodNotAllowed === foodToFigureOutCombinationStatusWith
+                        )
+                    ) {
+                        //if true the food combination is not allowed
+
+                        foodCombinationsStatus.push({
+                            food1: food,
+                            food2: foodToFigureOutCombinationStatusWith,
+                            combinationIsAllowedNotAllowedOrDoesNotExist:
+                                CombinationStatus.NOTALLOWED,
+                        });
+                    } else {
+                        //food combination does not exist
+
+                        foodCombinationsStatus.push({
+                            food1: food,
+                            food2: foodToFigureOutCombinationStatusWith,
+                            combinationIsAllowedNotAllowedOrDoesNotExist:
+                                CombinationStatus.DOESNOTEXIST,
+                        });
                     }
-                    //if false this food combination either does not exist yet or is allowed
                 }
-                //if false we are considering the same food so we do nothing
-            })
-        }
-        //if false food has not combinations stored
-    })
+            });
 
-    //create a new array in order to skim the notAllowedFoodCombinations array
-    let skimmedNotAllowedFoodCombinations: [Food, Food][] = [];
-    //skim the notAllowedFoodCombinations array
-    notAllowedFoodCombinations.forEach((notAllowedCombination) => {
-        if (
-            !skimmedNotAllowedFoodCombinations.find(
-                (combination) =>
-                    combination[0] === notAllowedCombination[0] &&
-                    combination[1] === notAllowedCombination[1]
-            ) &&
-            !skimmedNotAllowedFoodCombinations.find(
-                (combination) =>
-                    combination[0] === notAllowedCombination[1] &&
-                    combination[1] === notAllowedCombination[0]
-            )
-        ) {
-            //if true we add the combination status to the skimmedNotAllowedFoodCombinations array
+        } else {
+            //if false the food does not have some combinations already registered
 
-            skimmedNotAllowedFoodCombinations.push(notAllowedCombination);
+            return console.log(
+                "Food does not have combinations", food
+            );
         }
     });
 
-    //return the not allowed food combinations
-    return skimmedNotAllowedFoodCombinations;
+    // create an array to store all food informations
+    let completedFoodCombinationStatus: FoodCombinationStatusCompleteView = {
+        completeFoodCombinationStatus: foodCombinationsStatus,
+        allowedFoodCombinations: [], //create an array to store allowed food combination
+        notAllowedFoodCombinations: [], //create an array to store not allowed food combination
+        notExistingFoodCombinations: [] //create an array to store not existing food combination
+    };
+
+    // if true all the selected foods do not have some combinations already registered
+    if (foodCombinationsStatus.length == 0) {
+        console.log("All selected foods do not have some combinations already registered");
+        completedFoodCombinationStatus.completeFoodCombinationStatus = foodCombinationsStatus
+        return completedFoodCombinationStatus;
+    }
+    //if false we now have all the combinations status written between the selected foods stored in an array
+
+    //create a new array in order to skim the foodCombinationsStatus array
+    let skimmedFoodCombinationsStatus: FoodCombinationStatus[] = [];
+    //skim the foodCombinationsStatus array
+    foodCombinationsStatus.forEach((combinationStatus) => {
+        if (
+            !skimmedFoodCombinationsStatus.find(
+                (combination) =>
+                    combination.food1 === combinationStatus.food1 &&
+                    combination.food2 === combinationStatus.food2
+            ) &&
+            !skimmedFoodCombinationsStatus.find(
+                (combination) =>
+                    combination.food1 === combinationStatus.food2 &&
+                    combination.food2 === combinationStatus.food1
+            )
+        ) {
+            //if true we add the combination status to the skimmedFoodCombinationsStatus array
+
+            skimmedFoodCombinationsStatus.push(combinationStatus);
+        }
+    });
+
+    //sort the skimmed food combination status
+    skimmedFoodCombinationsStatus.forEach((skimmedfoodCombination) => {
+
+        if (
+            skimmedfoodCombination.combinationIsAllowedNotAllowedOrDoesNotExist ===
+            CombinationStatus.ALLOWED
+        ) {
+            //if true we add it to the array to store not allowed food combination
+
+            completedFoodCombinationStatus.allowedFoodCombinations.push([
+                skimmedfoodCombination.food1,
+                skimmedfoodCombination.food2,
+            ]);
+        }
+
+        if (
+            skimmedfoodCombination.combinationIsAllowedNotAllowedOrDoesNotExist ===
+            CombinationStatus.NOTALLOWED
+        ) {
+            //if true we add it to the array to store not allowed food combination
+
+            completedFoodCombinationStatus.notAllowedFoodCombinations.push([
+                skimmedfoodCombination.food1,
+                skimmedfoodCombination.food2,
+            ]);
+        }
+
+        if (
+            skimmedfoodCombination.combinationIsAllowedNotAllowedOrDoesNotExist ===
+            CombinationStatus.DOESNOTEXIST
+        ) {
+            //if true we add it to the array to store not existing food combination
+
+            completedFoodCombinationStatus.notExistingFoodCombinations.push([
+                skimmedfoodCombination.food1,
+                skimmedfoodCombination.food2,
+            ]);
+        }
+
+
+    });
+
+    return completedFoodCombinationStatus;
+
+}
+
+//populates newCombination array with an allowed or a not allowed food combination
+export function populateNewCombinationArray(selectedFoods: Food[], isAllowedCombination: boolean) {
+
+    //create a new array to update the combinations
+    let newCombinations: FoodCombination[] = [];
+
+    if (isAllowedCombination) {
+
+        //populate the new combinations array
+        selectedFoods.forEach((food) =>
+            newCombinations.push({
+                food: food,
+                foodsAllowedCombinations: selectedFoods.filter(
+                    (selectedFood) => selectedFood != food
+                ),
+                foodsNotAllowedCombinations: [],
+            })
+        );
+
+
+    } else {
+
+        selectedFoods.forEach((food) =>
+            newCombinations.push({
+                food: food,
+                foodsAllowedCombinations: [],
+                foodsNotAllowedCombinations: selectedFoods.filter(
+                    (selectedFood) => selectedFood != food
+                ),
+            })
+        );
+
+    }
+
+    return newCombinations;
+
+}
+
+export function handleFoodLogin(selectedOption: any, combinations: FoodCombination[], data: any) {
+
+    //fetch food data
+    let foodsId: number[] = [];
+    selectedOption.map((option: { value: string; label: string }) => {
+        foodsId.push(Number(option.value));
+    });
+    const selectedFoods = getFoodsFromId(foodsId);
+
+    //if true than we do nothing because a combination is made up of at least 2 foods
+    if (selectedFoods.length == 0 || selectedFoods.length == 1) {
+        console.log("Error! Select 2 foods at least");
+        return null;
+    }
+    //if false we have at least 2 foods
+
+    //create a new array to update the combinations
+    let newCombinations: FoodCombination[] = [];
+
+    //create an array to store if a food combination exists, is allowed or is not allowed
+    let foodCombinationsStatus: null | FoodCombinationStatusCompleteView = checkFoodCombinationStatus(selectedFoods, combinations);
+
+    if (data.glycemiaValue < 140) {
+        //if true all foods combinations are allowed
+
+        //if true we have at least one combination already registered
+        if (foodCombinationsStatus) {
+
+            // if true foods have some combinations already registered
+            if (foodCombinationsStatus?.completeFoodCombinationStatus.length != 0) {
+
+                console.log("Foods have some combinations already registered");
+
+                //if true than this food combination is allowed and the input glicemia value is wrong
+                if (foodCombinationsStatus.notAllowedFoodCombinations.length != 0) {
+                    console.log("Error! This combination is not allowed, please make sure that the inserted glicemia value is correct", foodCombinationsStatus.notAllowedFoodCombinations);
+                }
+
+                //if true than this food combination does not already exist and is the one which is not allowed
+                if (foodCombinationsStatus.notExistingFoodCombinations.length != 0) {
+                    //populate the new combinations array
+                    newCombinations = populateNewCombinationArray(selectedFoods, true)
+                }
+
+            } else {
+                //if false foods do not have some combinations already registered
+
+                console.log("Foods do not have some combinations already registered");
+
+                //populate the new combinations array
+                newCombinations = populateNewCombinationArray(selectedFoods, true)
+
+            }
+
+        } else {
+            //if false we do not even have one combination already registered
+
+            console.log("We do not even have one combination already registered");
+
+            //populate the new combinations array
+            newCombinations = populateNewCombinationArray(selectedFoods, true)
+
+        }
+
+        //update food combinations
+        if (foodCombinationsStatus) {
+            //if true we need to understand if some food combinations are already in our array
+
+            newCombinations = handleCombinationsUpdate(
+                newCombinations,
+                combinations,
+                true
+            );
+        }
+        //if false there are no combinations yet so we can populate it from scratch
+
+    } else {
+        //if false there is maybe a combination that is not allowed
+
+        if (selectedFoods.length > 2) {
+            //if true we do not know which food combination is the one not allowed
+
+            //try to figure out which combinations are not allowed
+            if (foodCombinationsStatus) {
+                //if true we need to understand if some food combinations are already in our array
+
+                //understand if we can really try to figure out which combination is the one not allowed
+                if (foodCombinationsStatus?.completeFoodCombinationStatus) {
+                    //try to figure out which combination is the one not allowed
+
+                    //we can't have the case in which  notExistingFoodCombinations.length === 0 && notAllowedFoodCombinations.length === 0 because it would mean that the glycemia value is normal
+
+                    if (
+                        foodCombinationsStatus.notExistingFoodCombinations.length === 1 &&
+                        foodCombinationsStatus.notAllowedFoodCombinations.length === 0
+                    ) {
+                        //if true we have successfully figured out which food combination is the one not allowed
+
+                        return console.log(
+                            "The not allowed food combination is",
+                            foodCombinationsStatus.notExistingFoodCombinations
+                        );
+                    }
+
+                    if (
+                        foodCombinationsStatus.notExistingFoodCombinations.length === 0 &&
+                        foodCombinationsStatus.notAllowedFoodCombinations.length === 1
+                    ) {
+                        //if true we have successfully figured out which food combination is the one not allowed
+
+                        return console.log(
+                            "The not allowed food combination is",
+                            foodCombinationsStatus.notAllowedFoodCombinations
+                        );
+                    }
+
+                    if (foodCombinationsStatus.notExistingFoodCombinations.length === 0) {
+                        //if true we know that the high glicemia value is due to this or these not allowed food combinations
+
+                        return console.log(
+                            "The not allowed food combination is",
+                            foodCombinationsStatus.notAllowedFoodCombinations
+                        );
+                    } else {
+                        //if false we cannot try to figure out which combination is the one not allowed
+
+                        return console.log(
+                            "We cannot undestrand which food combination is the one which is not allowed"
+                        );
+                    }
+
+                } else {
+                    //if false we cannot try to figure out which combination is the one not allowed
+
+                    return console.log(
+                        "We cannot undestrand which food combination is the one which is not allowed"
+                    );
+                }
+
+            } else {
+                //if false we do not even have one combination already registered so we cannot try to figure out which food combination is the one not allowed
+
+                return console.log(
+                    "We cannot understand which food combination is the one which is not allowed"
+                );
+
+            }
+
+        } else {
+            //if false we have 2 foods selected
+
+            //if true we have at least one combination already registered
+            if (foodCombinationsStatus) {
+
+                // if true foods have some combinations already registered
+                if (foodCombinationsStatus?.completeFoodCombinationStatus.length != 0) {
+
+                    console.log("Foods have some combinations already registered");
+
+                    //if true than this food combination is allowed and the input glicemia value is wrong
+                    if (foodCombinationsStatus.allowedFoodCombinations.length != 0) {
+                        console.log("Error! This combination is allowed, please make sure that the inserted glicemia value is correct", foodCombinationsStatus.allowedFoodCombinations);
+                    }
+
+                    //if true than this food combination does not already exist and is the one which is not allowed
+                    if (foodCombinationsStatus.notExistingFoodCombinations.length != 0) {
+                        //populate the new combinations array
+                        newCombinations = populateNewCombinationArray(selectedFoods, false)
+                    }
+
+                } else {
+                    //if false foods do not have some combinations already registered
+
+                    console.log("Foods do not have some combinations already registered");
+
+                    //populate the new combinations array
+                    newCombinations = populateNewCombinationArray(selectedFoods, false)
+
+                }
+
+            } else {
+                //if false we do not even have one combination already registered
+
+                console.log("We do not even have one combination already registered");
+
+                //populate the new combinations array
+                newCombinations = populateNewCombinationArray(selectedFoods, true)
+
+            }
+
+        }
+
+        //update food combinations
+        if (foodCombinationsStatus) {
+            //if true we need to understand if some food combinations are already in our array
+
+            newCombinations = handleCombinationsUpdate(
+                newCombinations,
+                combinations,
+                false
+            );
+        }
+        //if false there are no combinations yet so we can populate it from scratch
+
+    }
+    //update the state
+
+    return newCombinations;
 
 }
